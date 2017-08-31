@@ -11,7 +11,6 @@ def words(text):
 def fileindex(filename):
     with codecs.open("Selma/"+filename+".txt", 'r', encoding='utf8') as f:
         text = f.read()
-
     ws = words(text)
     dic = defaultdict()
     for match in ws:
@@ -22,7 +21,6 @@ def fileindex(filename):
         else:
             dic[word] = [ind]
 
-    pickle.dump(dic, open(filename+".idx", "wb"))
 
 
 fileindex('test') #Starts generating dictionary from bannlyst.txt

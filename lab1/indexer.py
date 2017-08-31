@@ -23,7 +23,7 @@ def fileindex(filename):
 
 
 
-fileindex('test') #Starts generating dictionary from bannlyst.txt
+fileindex('bannlyst') #Starts generating dictionary from bannlyst.txt
 
 #Tests
 dic = pickle.load(open('bannlyst'+".idx", "rb"))

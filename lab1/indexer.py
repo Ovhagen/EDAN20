@@ -21,14 +21,14 @@ def fileindex(filename):
         else:
             dic[word] = [ind]
 
+    pickle.dump(dic, open(filename+".idx", "wb"))
 
 
-fileindex('test') #Starts generating dictionary from bannlyst.txt
+fileindex('bannlyst') #Starts generating dictionary from bannlyst.txt
 
 #Tests
 dic = pickle.load(open('bannlyst'+".idx", "rb"))
 print(dic)
-
 print("gjord", dic.get('gjord'))            #Should be [8551, 183692, 220875]
 print("uppklarnade",dic.get('uppklarnade')) #Should be [8567]
 print("stjärnor",dic.get('stjärnor'))       #Should be [8590]

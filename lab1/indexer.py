@@ -1,24 +1,28 @@
-import re
+import regex as re
+import pickle
+import codecs
 from collections import Counter
+from collections import defaultdict
 
 
 def words(text):
-    return re.findall(r'\w+', text.lower())
+    return re.finditer(r'[\wåäö]+', text.lower())
 
 
-def indecies(word,text):
-    i = re.finditer(r"\b{0}\b".format(word), text)
-    return [m.start(0) for m in i]
+def fileindex(filename):
+    with codecs.open("Selma/"+filename+".txt", 'r', encoding='utf8') as f:
+        text = f.read()
 
-
-def fileindex(filepath):
-    text = open(filepath).read()
     ws = words(text)
-    return dict({w, indecies(w, text)} for w in set(ws) )
+    dic = defaultdict()
+    for match in ws:
+        word = match.group()
+        ind = match.start()
+        if (dic.get(word)):
+            dic[word].append(ind)
+        else:
+            dic[word] = [ind]
 
+    pickle.dump(dic, open(filename+".idx", "wb"))
 
-print(fileindex('Selma/bannlyst.txt'))
-
-WORDS = Counter(words(open('Selma/bannlyst.txt').read()))
-
-print(WORDS)
+print(pickle.load(open('bannlyst'+".idx", "rb")))

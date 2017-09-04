@@ -1,14 +1,12 @@
 import regex as re
 import pickle
 import codecs
-from collections import Counter
-from collections import defaultdict
 import os
 import sys
 
 
 def words(text):
-    return re.finditer(r'\p{L}+', text.lower())
+    return re.finditer(r'\p{L}+', text)
 
 def get_files(dir, suffix):
     """
@@ -38,8 +36,7 @@ def fileindex(dir):
     master_index = {}
     files = get_files(dir, ".txt")
     for file in files:
-        with codecs.open(dir+file, 'rb', encoding='utf-8') as f:
-            text = f.read()
+        text = open(dir+file).read().lower().strip()
         ws = words(text)
         idx = words_to_index(ws)
         for word in idx:

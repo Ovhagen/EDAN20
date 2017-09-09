@@ -1,18 +1,19 @@
 import regex as re
+from typing import List, Iterator
 
 #Regex (?s) = flags gXs active. global,
 # disallow meaningless escapes and dot matches new line
 
-def senteces(text):
-    return re.finditer('[A-Z][\p{L}1-9,;\s]+[.!?]', text)
+def senteces(text: str) ->  Iterator:
+    return re.finditer('\p{Lu}.+\.?', text)
 
-def receiveSenteces(senteces):
+def receiveSenteces(senteces: Iterator) -> List[str]:
     sent_idx = []
     for match in senteces:
-        sent = match.group()
+        sent = match.group().replace("\n", ' ')
         sent_idx.append(sent)
     return sent_idx
 
 textSenteces = receiveSenteces(senteces(open("Selma.txt").read().strip()))
-print(textSenteces[5001])
+print(textSenteces)
 print(len(textSenteces))

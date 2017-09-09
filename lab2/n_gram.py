@@ -5,7 +5,7 @@ from typing import List, Iterator
 # disallow meaningless escapes and dot matches new line
 
 def senteces(text: str) ->  Iterator:
-    return re.finditer('\p{Lu}[\p{L},\s]+\.?', text)
+    return re.finditer('\p{Lu}[\p{L}, ]+\.?', text)
 
 def receiveSenteces(senteces: Iterator) -> List[str]:
     sent_idx = []

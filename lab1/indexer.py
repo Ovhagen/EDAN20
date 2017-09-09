@@ -56,7 +56,6 @@ def worddicts(master_index):
 def tf(master_index: Dict[str, Dict[str, List[int]]]):
     word_frq = {}
     s = reduce(add, worddicts(master_index))
-
     for w in master_index:
         for doc in master_index[w]:
             tf = len(master_index[w][doc])/s[doc]
@@ -124,7 +123,7 @@ else:
 
 #Tests
 dic = pickle.load(open('master_index'+".idx", "rb"))
-#print('gjord:', dic['gjord']) #Should be [8551, 183692, 220875]
+print('gjord:', dic['gjord']) #Should be [8551, 183692, 220875]
 #print('uppklarnande:', dic['uppklarnande']) #Should be [8567]
 #print('stjärnor:', dic['stjärnor']) #Should be [8590]
 tf = tf(dic)

@@ -46,13 +46,13 @@ def mutual_info(words, freq_unigrams, freq_bigrams):
 bar = "====================================================="
 alpha = 1.0
 
-def senteces(text: str) ->  Iterator:
+def sentences(text: str) ->  Iterator:
     return re.finditer('\p{Lu}[^\.]+\.', text)
 
 
-def receiveSenteces(senteces: Iterator) -> List[str]:
+def receiveSentences(sentences: Iterator) -> List[str]:
     sent_idx = []
-    for match in senteces:
+    for match in sentences:
         sent = match.group().replace("\n", ' ')
         sent = sent[:-1]
         sent = tokenize(sent.lower())
@@ -115,19 +115,24 @@ def bigramProb(sentence):
         print(b[0],b[1],CB(b),unigrams[b[0]],biP(b))
     print(bar)
     totalProb = reduce(mul, probs)
-    print("Prob. biigrams:", totalProb)
+    print("Prob. bigrams:", totalProb)
     print("Entropy rate:", -math.log2(totalProb) / len(sentence))
     print("Perplexity:", math.pow(2, -math.log2(totalProb) / len(sentence)))
 
 
 #Main
-textSenteces = receiveSenteces(senteces(open("Selma.txt").read().strip()))
-allWords = [w for s in textSenteces for w in s]
+textSentences = receiveSentences(sentences(open("Selma.txt").read().strip()))
+allWords = [w for s in textSentences for w in s]
 unigrams = count_unigrams(allWords)
 bigrams = count_bigrams(allWords)
+
+print("\n")
 print("All unique words are:", len(unigrams))
 print("Possible bigrams:", len(unigrams)*len(unigrams))
 print("All unique bigrams are:",len(bigrams))
-
-test = ["<s>","det","var","en","gång","en","katt","som","hette","nils","</s>"]
-bigramProb(test)
+print("\n")
+uniTest = ["det","var","en","gång","en","katt","som","hette","nils","</s>"]
+biTest = ["<s>"] + uniTest
+unigramProb(uniTest)
+print("\n")
+bigramProb(biTest)

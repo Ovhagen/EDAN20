@@ -9,6 +9,8 @@ from functools import reduce
 def tokenize(text):
     words = re.findall('\p{L}+', text)
     return words
+
+
 def count_unigrams(words):
     frequency = {}
     for word in words:

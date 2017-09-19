@@ -25,8 +25,14 @@ def count_pos(corpus):
     return pos_cnt
 
 
-def appendLists(x,y):
-    return x + y
+def maxDict(dict):
+    maxima = ""
+    biggest = -1
+    for key in dict.keys():
+        if dict[key] > biggest:
+            maxima = key
+            biggest = dict[key]
+    return maxima
 
 def count_chunks(corpus,pos):
     """
@@ -36,13 +42,11 @@ def count_chunks(corpus,pos):
     :return: map from chunk to frequency of that chunk
     """
     freqMap = {}
-    corpus = reduce(appendLists,corpus)
-    for w in corpus:
-        if w["pos"] == pos:
-            try:
-                freqMap[w["chunk"]] += 1
-            except Exception:
-                freqMap[w["chunk"]] = 1
+    corpus = [val for sublist in corpus for val in sublist]
+    for row in corpus:
+        if row["pos"] == pos:
+            chunk = row["chunk"]
+            freqMap[chunk] = 1 + freqMap.get(chunk, 0) # one liner for increment, else set default 0
     return freqMap
 
 def train(corpus):
@@ -53,21 +57,12 @@ def train(corpus):
     :return:
     """
     pos_cnt = count_pos(corpus)
-    print(pos_cnt)
-    # We compute the chunk distribution by POS
-    chunk_dist = {key: {} for key in pos_cnt.keys()}
-    """
-    Fill in code to compute the chunk distribution for each part of speech
-    """
+    maxPos = {}
+    for pos in pos_cnt:
+        testChunkCnt = count_chunks(corpus, pos)
+        maxPos[pos] = maxDict(testChunkCnt)
 
-    # We determine the best association
-    pos_chunk = {}
-    """
-    Fill in code so that for each part of speech, you select the most frequent chunk.
-    You will build a dictionary with key values:
-    pos_chunk[pos] = most frequent chunk for pos
-    """
-    return pos_chunk
+    return maxPos
 
 
 def predict(model, corpus):
@@ -112,9 +107,6 @@ if __name__ == '__main__':
     train_corpus = conll_reader.split_rows(train_corpus, column_names)
     test_corpus = conll_reader.read_sentences(test_file)
     test_corpus = conll_reader.split_rows(test_corpus, column_names)
-
-    testChunkCnt = count_chunks(train_corpus,"NN")
-    print(testChunkCnt)
 
     model = train(train_corpus)
 

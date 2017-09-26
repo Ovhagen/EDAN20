@@ -77,6 +77,9 @@ def save(file, formatted_corpus, column_names):
 
 
 def extractSubjectVerbPairs(formatted_corpus):
+    for s in formatted_corpus:
+        for w in s:
+            w['form'] = w['form'].lower()
     svMap = {}
     for sentence in formatted_corpus:
         subjects = filter(lambda word: word['deprel'] == 'SS',sentence)
@@ -85,13 +88,31 @@ def extractSubjectVerbPairs(formatted_corpus):
             svMap[sv] = 1 + svMap.get(sv, 0)
     return svMap
 
-
-
 def sortedSubjectVerbPairs(svMap):
-    return sorted(svMap.items(), key = lambda p: p[1])
+    return sorted(svMap.items(), key=lambda p: p[1])
+
 
 def pairCount(svMap):
     return reduce(lambda a,b: a+b, map(lambda k: svMap[k], svMap.keys()))
+
+def extractSubjectVerbObjectTripples(formatted_corpus):
+    for s in formatted_corpus:
+        for w in s:
+            w['form'] = w['form'].lower()
+    SVOs = {}
+    for sentence in formatted_corpus:
+        subjects = filter(lambda word: word['deprel'] == 'SS', sentence)
+        subjVerbs = map(lambda s: (s, sentence[int(s['head'])]), subjects)
+        objects = filter(lambda word: word['deprel'] == 'OO', sentence)
+        for o in objects:
+            for sv in subjVerbs:
+                if sentence[int(o['head'])] == sv[1]:
+                    subject = sv[0]['form']
+                    verb = sv[1]['form']
+                    object = o['form']
+                    SVOs[(subject, verb, object)] = 1 + SVOs.get((subject, verb, object), 0)
+    return SVOs
+
 
 if __name__ == '__main__':
     column_names_2006 = ['id', 'form', 'lemma', 'cpostag', 'postag', 'feats', 'head', 'deprel', 'phead', 'pdeprel']
@@ -106,10 +127,15 @@ if __name__ == '__main__':
     #print(formatted_corpus[0])
 
     svs = extractSubjectVerbPairs(formatted_corpus)
-    #print(svs)
-    print(len(svs))
-    print(pairCount(svs))
-    #print(sortedSubjectVerbPairs(svs))
+    svos = extractSubjectVerbObjectTripples(formatted_corpus)
+    #print(formatted_corpus[2])
+    #print(svos)
+    #print(len(svos))
+    #print(pairCount(svos))
+    #print(sortedSubjectVerbPairs(svos))
+
+    gifter = list(filter(lambda s: len(list(filter(lambda w: w['form'] == 'gifter', s))) > 0, formatted_corpus))
+    print(extractSubjectVerbObjectTripples(gifter))
 
     column_names_u = ['id', 'form', 'lemma', 'upostag', 'xpostag', 'feats', 'head', 'deprel', 'deps', 'misc']
 

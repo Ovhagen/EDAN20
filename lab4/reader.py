@@ -7,6 +7,34 @@ import os
 from functools import reduce
 
 
+#Debugging
+
+def contains(word, sentence):
+    return len(list(filter(lambda w: w['form'] == word, sentence))) > 0
+
+
+def containsAndHasRelation(word, sentence, relation):
+    return len(list(filter(lambda w: w['form'] == word and w['deprel'] == relation, sentence))) > 0
+
+
+def reformat(word):
+    return [word['id'], word['form'], word['head'], word['deprel']]
+
+
+def reformatSentence(sentence):
+    return list(map(lambda w: reformat(w), sentence))
+
+
+def reformatAll(sentences):
+    return list(map(lambda s: reformatSentence(s), sentences))
+
+
+def printSentence(sentence):
+    print(reformatSentence(sentence))
+    print()
+
+#Code
+
 def get_files(dir, suffix):
     """
     Returns all the files in a folder ending with suffix
@@ -93,7 +121,9 @@ def sortedSubjectVerbPairs(svMap):
 
 
 def pairCount(svMap):
-    return reduce(lambda a,b: a+b, map(lambda k: svMap[k], svMap.keys()))
+    return reduce(lambda a, b: a+b, map(lambda k: svMap[k], svMap.keys()))
+
+mgsSentences = []
 
 def extractSubjectVerbObjectTripples(formatted_corpus):
     for s in formatted_corpus:
@@ -101,15 +131,19 @@ def extractSubjectVerbObjectTripples(formatted_corpus):
             w['form'] = w['form'].lower()
     SVOs = {}
     for sentence in formatted_corpus:
-        subjects = filter(lambda word: word['deprel'] == 'SS', sentence)
-        subjVerbs = map(lambda s: (s, sentence[int(s['head'])]), subjects)
-        objects = filter(lambda word: word['deprel'] == 'OO', sentence)
+        subjects = list(filter(lambda word: word['deprel'] == 'SS', sentence))
+        subjVerbs = list(map(lambda s: (s, sentence[int(s['head'])]), subjects))
+        objects = list(filter(lambda word: word['deprel'] == 'OO', sentence))
         for o in objects:
             for sv in subjVerbs:
-                if sentence[int(o['head'])] == sv[1]:
+                #print(sentence[int(o['head'])])
+                #print("sv", sv[1])
+                if sentence[int(o['head'])]["id"] == sv[1]["id"]:
                     subject = sv[0]['form']
                     verb = sv[1]['form']
                     object = o['form']
+                    #printSentence(sentence)
+                    mgsSentences.append(sentence)
                     SVOs[(subject, verb, object)] = 1 + SVOs.get((subject, verb, object), 0)
     return SVOs
 
@@ -123,6 +157,29 @@ if __name__ == '__main__':
 
     sentences = read_sentences(train_file)
     formatted_corpus = split_rows(sentences, column_names_2006)
+    corp1 = [[{'id': '0', 'form': 'root', 'lemma': 'ROOT', 'cpostag': 'ROOT', 'postag': 'ROOT', 'feats': 'ROOT',
+               'head': '0', 'deprel': 'ROOT', 'phead': '0', 'pdeprel': 'ROOT'}, {'id': '1', 'form': 'man',
+                'lemma': '_', 'cpostag': 'PO', 'postag': 'PO', 'feats': '_', 'head': '2', 'deprel': 'SS',
+                'phead': '_', 'pdeprel': '_'}, {'id': '2', 'form': 'skall', 'lemma': '_', 'cpostag': 'SV',
+                'postag': 'SV', 'feats': '_', 'head': '0', 'deprel': 'ROOT', 'phead': '_', 'pdeprel': '_'},
+              {'id': '3', 'form': 'ha', 'lemma': '_', 'cpostag': 'HV', 'postag': 'HV', 'feats': '_', 'head': '4',
+               'deprel': 'IV', 'phead': '_', 'pdeprel': '_'}, {'id': '4', 'form': 'känt', 'lemma': '_', 'cpostag': 'VV',
+                'postag': 'VV', 'feats': '_', 'head': '2', 'deprel': 'VG', 'phead': '_', 'pdeprel': '_'},
+              {'id': '5', 'form': 'varandra', 'lemma': '_', 'cpostag': 'PO', 'postag': 'PO', 'feats': '_', 'head': '4',
+               'deprel': 'OO', 'phead': '_', 'pdeprel': '_'}, {'id': '6', 'form': 'i', 'lemma': '_', 'cpostag': 'PR',
+                'postag': 'PR', 'feats': '_', 'head': '4', 'deprel': 'TA', 'phead': '_', 'pdeprel': '_'},
+              {'id': '7', 'form': 'många', 'lemma': '_', 'cpostag': 'PO', 'postag': 'PO', 'feats': '_', 'head': '8',
+               'deprel': 'DT', 'phead': '_', 'pdeprel': '_'}, {'id': '8', 'form': 'år', 'lemma': '_', 'cpostag': 'NN',
+                'postag': 'NN', 'feats': '_', 'head': '6', 'deprel': 'PA', 'phead': '_', 'pdeprel': '_'},
+              {'id': '9', 'form': 'innan', 'lemma': '_', 'cpostag': 'UK', 'postag': 'UK', 'feats': '_', 'head': '11',
+               'deprel': 'UK', 'phead': '_', 'pdeprel': '_'}, {'id': '10', 'form': 'man', 'lemma': '_', 'cpostag': 'PO',
+                'postag': 'PO', 'feats': '_', 'head': '11', 'deprel': 'SS', 'phead': '_', 'pdeprel': '_'},
+              {'id': '11', 'form': 'gifter', 'lemma': '_', 'cpostag': 'VV', 'postag': 'VV', 'feats': '_', 'head': '4',
+               'deprel': 'TA', 'phead': '_', 'pdeprel': '_'}, {'id': '12', 'form': 'sig', 'lemma': '_', 'cpostag': 'PO',
+                'postag': 'PO', 'feats': '_', 'head': '11', 'deprel': 'OO', 'phead': '_', 'pdeprel': '_'},
+              {'id': '13', 'form': '.', 'lemma': '_', 'cpostag': 'IP', 'postag': 'IP', 'feats': '_', 'head': '2',
+               'deprel': 'IP', 'phead': '_', 'pdeprel': '_'}]]
+    #print(formatted_corpus)
     #print(train_file, len(formatted_corpus))
     #print(formatted_corpus[0])
 
@@ -130,18 +187,14 @@ if __name__ == '__main__':
     svos = extractSubjectVerbObjectTripples(formatted_corpus)
     #print(formatted_corpus[2])
     #print(svos)
-    #print(len(svos))
-    #print(pairCount(svos))
-    #print(sortedSubjectVerbPairs(svos))
+    print(len(svos))
+    print(pairCount(svos))
+    print(sortedSubjectVerbPairs(svos))
 
-    gifter = list(filter(lambda s: len(list(filter(lambda w: w['form'] == 'gifter', s))) > 0, formatted_corpus))
-    print(extractSubjectVerbObjectTripples(gifter))
 
-    column_names_u = ['id', 'form', 'lemma', 'upostag', 'xpostag', 'feats', 'head', 'deprel', 'deps', 'misc']
+    #print("========================================")
+    #mangiftersig = list(filter(lambda s: contains('gifter', s) and containsAndHasRelation('man', s, 'SS') and contains('sig',s), formatted_corpus))
+    #for s in mangiftersig:
+    #    if not mgsSentences.__contains__(s):
+    #        print(s)
 
-    files = get_files('./corpus/ud-treebanks-v1.3/', 'train.conll')
-    for train_file in files:
-        sentences = read_sentences(train_file)
-        formatted_corpus = split_rows(sentences, column_names_u)
-        print(train_file, len(formatted_corpus))
-        print(formatted_corpus[0])

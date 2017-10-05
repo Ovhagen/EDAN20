@@ -5,6 +5,8 @@ __author__ = "Pierre Nugues"
 
 import transition
 import conll
+import features
+
 
 
 def reference(stack, queue, graph):
@@ -78,6 +80,8 @@ if __name__ == '__main__':
         # Poorman's projectivization to have well-formed graphs.
         for word in sentence:
             word['head'] = graph['heads'][word['id']]
+
+
 
         #print(transitions)
         #print(graph)

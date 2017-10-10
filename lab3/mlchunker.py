@@ -79,6 +79,7 @@ def extract_features_sent(sentence, w_size, feature_names, prediction=False):
 
         # We represent the feature vector as a dictionary
         X.append(dict(zip(feature_names, x)))
+        #print(dict(zip(feature_names, x)))
         # The classes are stored in a list
         y.append(padded_sentence[i + w_size][2])
     return X, y
@@ -131,13 +132,16 @@ def predict(test_sentences, feature_names, f_out):
         for x in X_test_dict:
             x["s_n2"] = y_test_predicted_symbols[-2]
             x["s_n1"] = y_test_predicted_symbols[-1]
+            #print('chunks', x)
             # Vectorize the test sentence and one hot encoding
             X_test = vec.transform(x)
             # Predicts the chunks and returns numbers
             y_test_predicted = classifier.predict(X_test)
             # Converts to chunk names
             y_test_predicted_symbol = dict_classes[y_test_predicted[0]]
+
             y_test_predicted_symbols.append(y_test_predicted_symbol)
+            #print(y_test_predicted_symbols)
         # Appends the predicted chunks as a last column and saves the rows
         y_test_predicted_symbols = y_test_predicted_symbols[2:]
         rows = test_sentence.splitlines()
@@ -193,6 +197,8 @@ if __name__ == '__main__':
     X_test = vec.transform(X_test_dict)  # Possible to add: .toarray()
     y_test = [inv_dict_classes[i] if i in y_symbols else 0 for i in y_test_symbols]
     y_test_predicted = classifier.predict(X_test)
+    #print("test", y_test)
+    print("pred", y_test_predicted)
     print("Classification report for classifier %s:\n%s\n"
           % (classifier, metrics.classification_report(y_test, y_test_predicted)))
 

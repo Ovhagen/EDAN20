@@ -1,5 +1,6 @@
 
 import dparser
+import transition
 import conll
 import time
 from sklearn.feature_extraction import DictVectorizer
@@ -8,39 +9,104 @@ from sklearn import metrics
 import pickle
 
 def extract1(stack, queue, graph, feature_names, sentence):
-    print(stack)
-    stackForm = stack[0]['form']
-    stackPos = stack[0]['postag']
-    queueForm = queue[0]['form']
-    queuePos = queue[0]['postag']
-    feats = [stackForm, stackPos, queueForm, queuePos]
+    if stack:
+        stackForm = stack[0]['form']
+        stackPos = stack[0]['postag']
+    else:
+        stackForm = "nil"
+        stackPos = "nil"
+
+    if queue:
+        queueForm = queue[0]['form']
+        queuePos = queue[0]['postag']
+    else:
+        queueForm = "nil"
+        queuePos = "nil"
+
+    canRe = str(transition.can_reduce(stack, graph))
+    canLa = str(transition.can_leftarc(stack, graph))
+
+    feats = [stackPos, stackForm, queuePos, queueForm] + [canRe, canLa]
     features = dict(zip(feature_names, feats))
     return features
 
 
 def extract2(stack, queue, graph, feature_names, sentence):
     feats = []
-    for i in range(2):
-        stackForm = stack[i]['form']
-        stackPos = stack[i]['postag']
-        queueForm = queue[i]['form']
-        queuePos = queue[i]['postag']
-        feats += [stackForm, stackPos, queueForm, queuePos]
+    if stack:
+        stackForm = stack[0]['form']
+        stackPos = stack[0]['postag']
+    else:
+        stackForm = "nil"
+        stackPos = "nil"
+
+    if len(stack) > 1:
+        stackForm_2 = stack[1]['form']
+        stackPos_2 = stack[1]['postag']
+    else:
+        stackForm_2 = "nil"
+        stackPos_2 = "nil"
+
+    if queue:
+        queueForm = queue[0]['form']
+        queuePos = queue[0]['postag']
+    else:
+        queueForm = "nil"
+        queuePos = "nil"
+
+    if len(queue) > 1:
+        queueForm_2 = queue[1]['form']
+        queuePos_2 = queue[1]['postag']
+    else:
+        queueForm_2 = "nil"
+        queuePos_2 = "nil"
+
+    canRe = str(transition.can_reduce(stack, graph))
+    canLa = str(transition.can_leftarc(stack, graph))
+    feats += [stackPos, stackPos_2, stackForm, stackForm_2,
+              queuePos, queuePos_2, queueForm, queueForm_2] + [canRe, canLa]
     features = dict(zip(feature_names, feats))
     return features
 
 
 def extract3(stack, queue, graph, feature_names, sentence):
     feats = []
-    for i in range(2):
-        stackForm = stack[i]['form']
-        stackPos = stack[i]['postag']
-        queueForm = queue[i]['form']
-        queuePos = queue[i]['postag']
-        feats += [stackForm, stackPos, queueForm, queuePos]
+    if stack:
+        stackForm = stack[0]['form']
+        stackPos = stack[0]['postag']
+    else:
+        stackForm = "nil"
+        stackPos = "nil"
+
+    if len(stack) > 1:
+        stackForm_2 = stack[1]['form']
+        stackPos_2 = stack[1]['postag']
+    else:
+        stackForm_2 = "nil"
+        stackPos_2 = "nil"
+
+    if queue:
+        queueForm = queue[0]['form']
+        queuePos = queue[0]['postag']
+    else:
+        queueForm = "nil"
+        queuePos = "nil"
+
+    if len(queue) > 1:
+        queueForm_2 = queue[1]['form']
+        queuePos_2 = queue[1]['postag']
+    else:
+        queueForm_2 = "nil"
+        queuePos_2 = "nil"
+    #sats för tom stack/queue?
     stackHeadPos = sentence[int(graph['heads'][stack[0]['id']])]['postag']
     stackPrevPos = sentence[int(stack[0]['id']) - 1]['postag']
-    feats += [stackHeadPos, stackPrevPos]
+
+    canRe = str(transition.can_reduce(stack, graph))
+    canLa = str(transition.can_leftarc(stack, graph))
+    feats += [stackPos, stackPos_2, stackForm, stackForm_2,
+              queuePos, queuePos_2, queueForm, queueForm_2,
+              stackHeadPos, stackPrevPos] + [canRe, canLa]
     features = dict(zip(feature_names, feats))
     return features
 
@@ -53,7 +119,7 @@ def initialStructures(sentence):
     graph['deprels']['0'] = 'ROOT'
     stack = []
     queue = list(sentence)
-    return (stack,queue,graph)
+    return stack, queue, graph
 
 
 def createXY(sentences, feature_names):
@@ -61,12 +127,21 @@ def createXY(sentences, feature_names):
     Y = []
     for sentence in sentences:
         (stack, queue, graph) = initialStructures(sentence)
-        while len(queue) > 0:
+        while queue:
+            X.append(extract2(stack, queue, graph, feature_names, sentence))
             (stack, queue, graph, action) = dparser.reference(stack, queue, graph)
-            X.append(extract1(stack, queue, graph, feature_names, sentence))
             Y.append(action)
-
     return X, Y
+
+
+def createX(sentences, feature_names):
+    X = []
+    for sentence in sentences:
+        (stack, queue, graph) = initialStructures(sentence)
+        while len(queue) > 0:
+            #print(queue[0])
+            X.append(extract1(stack, queue, graph, feature_names, sentence))
+    return X
 
 
 def encode_classes(y_symbols):
@@ -115,16 +190,24 @@ def encode_classes(y_symbols):
 if __name__ == "__main__":
 
     train_file = './swedish_talbanken05_train.conll'
-    test_file = './swedish_talbanken05_test_blind.conll'
+    test_file = './swedish_talbanken05_test.conll'
     column_names_2006 = ['id', 'form', 'lemma', 'cpostag', 'postag', 'feats', 'head', 'deprel', 'phead', 'pdeprel']
     column_names_2006_test = ['id', 'form', 'lemma', 'cpostag', 'postag', 'feats']
 
     sentences = conll.read_sentences(train_file)
     formatted_corpus = conll.split_rows(sentences, column_names_2006)
 
-    feature_names = ['stackForm', 'stackPos', 'queueForm', 'queuePos']
+    feature_names = ['stackPos', 'stackForm', 'queuePos', 'queueForm', 'can_re', 'can_la']
+    feature_names2 = ['stackPos', 'stackPos_2', 'stackForm', 'stackForm_2', 'queuePos',
+                      'queuePos_2', 'queueForm', 'queueForm_2', 'can_re', 'can_la']
+    feature_names3 = ['stackPos', 'stackPos_2', 'stackForm', 'stackForm_2', 'queuePos',
+                      'queuePos_2', 'queueForm' 'queueForm_2', 'stackHeadPos', 'stackPrevPos', 'can_re', 'can_la']
 
-    X_dict, y_symbols = createXY(sentences, feature_names)
+    X_dict, y_symbols = createXY(formatted_corpus, feature_names2)
+
+    #tests
+    for i in range(8):
+        print("x=", X_dict[i], ", y=", y_symbols[i])
 
     print("Encoding the features and classes...")
     # Vectorize the feature matrix and carry out a one-hot encoding
@@ -141,23 +224,26 @@ if __name__ == "__main__":
     classifier = linear_model.LogisticRegression(penalty='l2', dual=True, solver='liblinear')
 
     try:
-        classifier = pickle.load(open("clf" + ".sav", "rb"))
+        classifier = pickle.load(open("clf2" + ".sav", "rb"))
     except FileNotFoundError:
         classifier.fit(X, y)
-        pickle.dump(classifier, open("clf" + ".sav", "wb"))
+        pickle.dump(classifier, open("clf2" + ".sav", "wb"))
 
     test_start_time = time.clock()
     # We apply the model to the test set
     test_sentences = conll.read_sentences(test_file)
+    test_sentences = conll.split_rows(test_sentences, column_names_2006)
 
-    # Here we carry out a chunk tag prediction and we report the per tag error
-    # This is done for the whole corpus without regard for the sentence structure
-    print("Predicting the chunks in the test set...")
+    #print(test_sentences[:3])
+
+
+    print("Predicting the dependencies in the test set...")
     X_test_dict, y_test_symbols = createXY(test_sentences, feature_names)
     # Vectorize the test set and one-hot encoding
     X_test = vec.transform(X_test_dict)  # Possible to add: .toarray()
     y_test = [inv_dict_classes[i] if i in y_symbols else 0 for i in y_test_symbols]
     y_test_predicted = classifier.predict(X_test)
+
     print("Classification report for classifier %s:\n%s\n"
           % (classifier, metrics.classification_report(y_test, y_test_predicted)))
 
@@ -166,7 +252,7 @@ if __name__ == "__main__":
     # but we need to predict one sentence at a time to have the same
     # corpus structure
     print("Predicting the test set...")
-    f_out = open('out', 'w')
+    f_out = open('out2', 'w')
     #predict(test_sentences, feature_names, f_out)
 
     end_time = time.clock()

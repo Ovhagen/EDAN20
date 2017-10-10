@@ -98,5 +98,5 @@ if __name__ == '__main__':
         if len(sentence[0]) < n:
             n = len(sentence[0])
             shortest = sentence
-    print(shortest)
+    #print(shortest)
 

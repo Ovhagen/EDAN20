@@ -74,16 +74,20 @@ def extract3(stack, queue, graph, feature_names, sentence):
     if stack:
         stackForm = stack[0]['form']
         stackPos = stack[0]['postag']
+        stackHeadPos = sentence[int(graph['heads'][stack[0]['id']])]['postag']
     else:
         stackForm = "nil"
         stackPos = "nil"
+        stackHeadPos = "nil"
 
     if len(stack) > 1:
         stackForm_2 = stack[1]['form']
         stackPos_2 = stack[1]['postag']
+        stackPrevPos = sentence[int(stack[0]['id']) - 1]['postag']
     else:
         stackForm_2 = "nil"
         stackPos_2 = "nil"
+        stackPrevPos = "nil"
 
     if queue:
         queueForm = queue[0]['form']
@@ -98,9 +102,6 @@ def extract3(stack, queue, graph, feature_names, sentence):
     else:
         queueForm_2 = "nil"
         queuePos_2 = "nil"
-    #sats för tom stack/queue?
-    stackHeadPos = sentence[int(graph['heads'][stack[0]['id']])]['postag']
-    stackPrevPos = sentence[int(stack[0]['id']) - 1]['postag']
 
     canRe = str(transition.can_reduce(stack, graph))
     canLa = str(transition.can_leftarc(stack, graph))
@@ -184,9 +185,6 @@ def encode_classes(y_symbols):
     return y, dict_classes, inv_dict_classes
 
 
-
-
-
 if __name__ == "__main__":
 
     train_file = './swedish_talbanken05_train.conll'
@@ -206,8 +204,8 @@ if __name__ == "__main__":
     X_dict, y_symbols = createXY(formatted_corpus, feature_names2)
 
     #tests
-    for i in range(8):
-        print("x=", X_dict[i], ", y=", y_symbols[i])
+    for i in range(9):
+        print("x =", X_dict[i], ", y =", y_symbols[i])
 
     print("Encoding the features and classes...")
     # Vectorize the feature matrix and carry out a one-hot encoding
@@ -224,10 +222,10 @@ if __name__ == "__main__":
     classifier = linear_model.LogisticRegression(penalty='l2', dual=True, solver='liblinear')
 
     try:
-        classifier = pickle.load(open("clf2" + ".sav", "rb"))
+        classifier = pickle.load(open("clf" + ".sav", "rb"))
     except FileNotFoundError:
         classifier.fit(X, y)
-        pickle.dump(classifier, open("clf2" + ".sav", "wb"))
+        pickle.dump(classifier, open("clf" + ".sav", "wb"))
 
     test_start_time = time.clock()
     # We apply the model to the test set
@@ -238,7 +236,7 @@ if __name__ == "__main__":
 
 
     print("Predicting the dependencies in the test set...")
-    X_test_dict, y_test_symbols = createXY(test_sentences, feature_names)
+    X_test_dict, y_test_symbols = createXY(test_sentences, feature_names2)
     # Vectorize the test set and one-hot encoding
     X_test = vec.transform(X_test_dict)  # Possible to add: .toarray()
     y_test = [inv_dict_classes[i] if i in y_symbols else 0 for i in y_test_symbols]
@@ -252,7 +250,7 @@ if __name__ == "__main__":
     # but we need to predict one sentence at a time to have the same
     # corpus structure
     print("Predicting the test set...")
-    f_out = open('out2', 'w')
+    f_out = open('out', 'w')
     #predict(test_sentences, feature_names, f_out)
 
     end_time = time.clock()

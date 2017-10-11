@@ -74,20 +74,32 @@ def extract3(stack, queue, graph, feature_names, sentence):
     if stack:
         stackForm = stack[0]['form']
         stackPos = stack[0]['postag']
-        stackHeadPos = sentence[int(graph['heads'][stack[0]['id']])]['postag']
+        if stack[0]['id'] in graph['heads'].keys() :
+            stackHeadPos = sentence[int(graph['heads'][stack[0]['id']])]['postag']
+            stackHeadForm = sentence[int(graph['heads'][stack[0]['id']])]['form']
+        else :
+            stackHeadPos = "nil"
+            stackHeadForm = "nil"
+        if int(stack[0]['id']) > 0 and len(sentence) > int(stack[0]['id']):
+            stackNextPos = sentence[int(stack[0]['id']) + 1]['postag']
+            stackNextForm = sentence[int(stack[0]['id']) + 1]['form']
+        else :
+            stackNextPos = "nil"
+            stackNextForm = "nil"
     else:
         stackForm = "nil"
         stackPos = "nil"
         stackHeadPos = "nil"
+        stackHeadForm = "nil"
+        stackNextPos = "nil"
+        stackNextForm = "nil"
 
     if len(stack) > 1:
         stackForm_2 = stack[1]['form']
         stackPos_2 = stack[1]['postag']
-        stackPrevPos = sentence[int(stack[0]['id']) - 1]['postag']
     else:
         stackForm_2 = "nil"
         stackPos_2 = "nil"
-        stackPrevPos = "nil"
 
     if queue:
         queueForm = queue[0]['form']
@@ -103,11 +115,14 @@ def extract3(stack, queue, graph, feature_names, sentence):
         queueForm_2 = "nil"
         queuePos_2 = "nil"
 
+
+
     canRe = str(transition.can_reduce(stack, graph))
     canLa = str(transition.can_leftarc(stack, graph))
+
     feats += [stackPos, stackPos_2, stackForm, stackForm_2,
               queuePos, queuePos_2, queueForm, queueForm_2,
-              stackHeadPos, stackPrevPos] + [canRe, canLa]
+              stackHeadPos, stackHeadForm, stackNextPos, stackNextForm] + [canRe, canLa]
     features = dict(zip(feature_names, feats))
     return features
 
@@ -129,20 +144,11 @@ def createXY(sentences, feature_names):
     for sentence in sentences:
         (stack, queue, graph) = initialStructures(sentence)
         while queue:
-            X.append(extract2(stack, queue, graph, feature_names, sentence))
+            X.append(extract3(stack, queue, graph, feature_names, sentence))
             (stack, queue, graph, action) = dparser.reference(stack, queue, graph)
             Y.append(action)
     return X, Y
 
-
-def createX(sentences, feature_names):
-    X = []
-    for sentence in sentences:
-        (stack, queue, graph) = initialStructures(sentence)
-        while len(queue) > 0:
-            #print(queue[0])
-            X.append(extract1(stack, queue, graph, feature_names, sentence))
-    return X
 
 
 def encode_classes(y_symbols):
@@ -199,9 +205,9 @@ if __name__ == "__main__":
     feature_names2 = ['stackPos', 'stackPos_2', 'stackForm', 'stackForm_2', 'queuePos',
                       'queuePos_2', 'queueForm', 'queueForm_2', 'can_re', 'can_la']
     feature_names3 = ['stackPos', 'stackPos_2', 'stackForm', 'stackForm_2', 'queuePos',
-                      'queuePos_2', 'queueForm' 'queueForm_2', 'stackHeadPos', 'stackPrevPos', 'can_re', 'can_la']
+                      'queuePos_2', 'queueForm', 'queueForm_2', 'stackHeadPos', 'stackHeadForm', 'stackNextPos', 'stackNextForm', 'can_re', 'can_la']
 
-    X_dict, y_symbols = createXY(formatted_corpus, feature_names2)
+    X_dict, y_symbols = createXY(formatted_corpus, feature_names3)
 
     #tests
     for i in range(9):
@@ -222,10 +228,10 @@ if __name__ == "__main__":
     classifier = linear_model.LogisticRegression(penalty='l2', dual=True, solver='liblinear')
 
     try:
-        classifier = pickle.load(open("clf" + ".sav", "rb"))
+        classifier = pickle.load(open("clf3" + ".sav", "rb"))
     except FileNotFoundError:
         classifier.fit(X, y)
-        pickle.dump(classifier, open("clf" + ".sav", "wb"))
+        pickle.dump(classifier, open("clf3" + ".sav", "wb"))
 
     test_start_time = time.clock()
     # We apply the model to the test set
@@ -236,7 +242,7 @@ if __name__ == "__main__":
 
 
     print("Predicting the dependencies in the test set...")
-    X_test_dict, y_test_symbols = createXY(test_sentences, feature_names2)
+    X_test_dict, y_test_symbols = createXY(test_sentences, feature_names3)
     # Vectorize the test set and one-hot encoding
     X_test = vec.transform(X_test_dict)  # Possible to add: .toarray()
     y_test = [inv_dict_classes[i] if i in y_symbols else 0 for i in y_test_symbols]
@@ -250,7 +256,7 @@ if __name__ == "__main__":
     # but we need to predict one sentence at a time to have the same
     # corpus structure
     print("Predicting the test set...")
-    f_out = open('out', 'w')
+    f_out = open('out3', 'w')
     #predict(test_sentences, feature_names, f_out)
 
     end_time = time.clock()
